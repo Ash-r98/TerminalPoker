@@ -2,7 +2,7 @@ from random import randint, shuffle
 import handdetector
 import os
 
-cardvalues = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'j', 'q', 'k', 'a']
+cardvalues = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
 suits = ['spade', 'heart', 'club', 'diamond']
 suiticons = ['♤', '♡', '♧', '♢']
 handtypes = ['high card', 'pair', 'two pair' ,'three of a kind', 'straight', 'flush', 'full house', 'four of a kind', 'straight flush', 'royal flush']
@@ -12,7 +12,8 @@ fulldeck = []
 for i in range(len(cardvalues)): # Each card value
     for j in range(len(suits)): # Each suit
         fulldeck.append([cardvalues[i], suits[j]])
-deck = shuffle(fulldeck)
+deck = fulldeck
+shuffle(deck)
 
 # Colours
 reset = "\033[0m"
@@ -47,8 +48,20 @@ def displaynames():
         print(name)
     print() # Leaves whitespace after names are displayed
 
-def draw():
-    return deck.pop()
+def displaycard(card):
+    if card[1] == 'spade':
+        print(f"{dim}{card[0]} {suiticons[0]}{reset}")
+    elif card[1] == 'heart':
+        print(f"{red}{card[0]} {suiticons[1]}{reset}")
+    elif card[1] == 'club':
+        print(f"{green}{card[0]} {suiticons[2]}{reset}")
+    elif card[1] == 'diamond':
+        print(f"{orange}{card[0]} {suiticons[3]}{reset}")
+    else:
+        print("Suit not found")
+
+def deckreset():
+    return shuffle(fulldeck)
 
 
 # Classes
@@ -60,9 +73,15 @@ class Player:
         self.name = newname
         self.hand = []
     def newhand(self):
-        self.hand = [draw(), draw()]
+        self.hand = [deck.pop(), deck.pop()]
     def resethand(self):
         self.hand = []
+    def viewhand(self):
+        input(f"Player {self.name} press enter to see your cards when no one else is looking\n")
+        for i in range(len(self.hand)):
+            displaycard(self.hand[i])
+        input("\nPress enter to wipe the screen\n")
+        clearscreen()
 
 
 playerlist = []
@@ -99,3 +118,17 @@ playernum = len(playernamelist)
 for i in range(playernum):
     playerlist.append(Player(playernamelist[i]))
 
+clearscreen()
+
+
+blindcounter = randint(0, playernum-1) # Player id of counter will be small blind, counter + 1 will be big blind
+
+# Game loop
+run = True
+while run:
+    for i in range(playernum):
+        clearscreen()
+        print("Card viewing")
+        playerlist[i].resethand()
+        playerlist[i].newhand()
+        playerlist[i].viewhand()
