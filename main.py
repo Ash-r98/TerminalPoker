@@ -108,7 +108,7 @@ def decision(player):
             print("Invalid option")
 
 def decisionloop(player, pot, highestbid, riverrevealamount):
-    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}")
+    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}\nCurrent Bid: {player.bid}")
     riverdisplay(riverrevealamount)
 
     if not player.folded:
@@ -148,6 +148,52 @@ def playersstillin():
         else:
             lastinid = i
     return playernum - foldcounter, lastinid
+
+def highcardcompare(hand1, hand2):
+    # Return: 0 = tie, 1 = hand1 better, 2 = hand2 better
+    hand1 = handdetector.sorthand(hand1)
+    hand2 = handdetector.sorthand(hand2)
+    for i in range(len(hand1)):
+        index = -1 - i
+        if cardvalues.index(hand1[index][0]) > cardvalues.index(hand2[index][0]):
+            return 1
+        elif cardvalues.index(hand1[index][0]) < cardvalues.index(hand2[index][0]):
+            return 2
+    return 0 # Tie
+
+def handcompare(hand1, hand2):
+    # Return: 0 = tie, 1 = hand1 better, 2 = hand2 better
+    hand1detect = handdetector.detectpokerhand(hand1)
+    hand2detect = handdetector.detectpokerhand(hand2)
+
+    if handtypes.index(hand1detect[0]) > handtypes.index(hand2detect[0]): # Hand 1 hand type is better
+        return 1
+    elif handtypes.index(hand1detect[0]) < handtypes.index(hand2detect[0]): # Hand 2 hand type is better
+        return 2
+    else:
+        if hand1detect[0] != 'full house' and hand1detect[0] != 'straight' and hand1detect[0] != 'straight flush':
+            # Hand with higher high card will win
+            highcardcompareresult = highcardcompare(hand1detect[1], hand2detect[1])
+            if highcardcompareresult != 0: # Not a tie
+                return highcardcompareresult
+            else:
+                highcardcompareresult2 = highcardcompare(hand1detect[1], hand2detect[1])
+                return highcardcompareresult2
+
+def handlistcompare(handlist): # Finds the highest of a list of hands and sorts by hand strength
+    # Quicksort
+    if len(handlist) <= 1:
+        return handlist
+    else:
+        pivothand = handlist[0]
+        betterlist = []
+        worselist = []
+        for i in range(1, len(handlist)-1):
+            if handcompare(pivothand, handlist[i]) == 2:
+                betterlist.append(handlist[i])
+            else: # Worse or tie
+                worselist.append(handlist[i])
+        return handlistcompare(worselist) + pivothand + handlistcompare(betterlist)
 
 
 # Classes
@@ -235,9 +281,9 @@ while run:
     # Blinds
     for i in range(blindnumber):
         select = (blindcounter + i) % playernum
+        print(f"Player {playerlist[select].name} is blind (${blindamount * (i + 1)})")
         pot += playerlist[select].pay(blindamount * (i + 1))
         playerlist[select].bid = blindamount * (i + 1)
-        print(f"Player {playerlist[select].name} is blind (${blindamount * (i + 1)})")
         input("Press enter to continue\n")
 
     highestbid = blindamount * blindnumber
@@ -277,6 +323,8 @@ while run:
         if winnerid is not None:
             break
 
+
+    # Post round loop winner detection
     if winnerid is not None:
         print(f"Player {playerlist[winnerid].name} won the round and gained ${pot}!")
         if initialmoney[winnerid] >= pot:
@@ -284,5 +332,26 @@ while run:
         else: # Sidepot
             pass
     else:
-        pass
+        playersremaining = []
+        playersremaininghands = []
+        for i in range(playernum):
+            if not playerlist[i].folded:
+                playersremaining.append(playerlist[i])
+                playersremaininghands.append(playerlist[i].hand + river)
+
+        rankedhands = handlistcompare(playersremaininghands)
+        for player in playersremaining:
+            temphand = handdetector.sorthand(player.hand + river)
+            tophand = handdetector.sorthand(rankedhands[-1])
+            if temphand == tophand:
+                winner = player
+                break
+
+        print(f"Player {playerlist[winnerid].name} won the round and gained ${pot}!")
+        if initialmoney[winnerid] >= pot:
+            playerlist[winnerid].money += pot
+        else:  # Sidepot
+            pass
+
+    input("Press enter to begin the next round\n")
     clearscreen()
