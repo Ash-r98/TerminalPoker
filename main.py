@@ -1,4 +1,5 @@
-from random import randint, shuffle
+from random import randint, shuffle#
+from time import sleep
 import handdetector
 import os
 
@@ -15,11 +16,15 @@ for i in range(len(cardvalues)): # Each card value
 deck = fulldeck
 shuffle(deck)
 
+river = []
+pot = 0
+initialmoney = []
+
 # Colours
 reset = "\033[0m"
 dim = "\033[2m" # Spades
 red = "\033[31m" # Hearts
-green = "\033[28;5;22m" # Clubs
+green = "\033[38;5;70m" # Clubs
 orange = "\033[38;5;214m" # Diamonds
 
 # Subroutins
@@ -61,7 +66,93 @@ def displaycard(card):
         print("Suit not found")
 
 def deckreset():
-    return shuffle(fulldeck)
+    deck = fulldeck
+    shuffle(deck)
+
+def riverreset():
+    river = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()]
+
+def riverdisplay(riverrevealamount):
+    print("River:")
+    for i in range(len(river)):
+        if i < riverrevealamount:
+            displaycard(river[i])
+    print()
+
+def potreset():
+    pot = 0
+
+def initialmoneyreset():
+    initialmoney = []
+    for i in range(playernum):
+        initialmoney.append(playerlist[i].money)
+
+def decision(player):
+    raiseamount = 0
+    while True:
+        cmd = input("Options: (Fold, Check, Raise, Cards)\n").lower()
+        if cmd == 'fold':
+            return cmd, raiseamount
+        elif cmd == 'check':
+            return cmd, raiseamount
+        elif cmd == 'raise':
+            if not player.checked:
+                amount = input("By how much?\n")
+                if amount == 'all':
+                    raiseamount = player.money
+                    return cmd, raiseamount
+                else:
+                    try:
+                        raiseamount = int(amount)
+                        return cmd, raiseamount
+                    except:
+                        print("Invalid amount")
+            else:
+                print("You have already checked this round, you cannot raise")
+        elif cmd == 'cards':
+            player.viewhand()
+        else:
+            print("Invalid option")
+
+def decisionloop(player, pot, highestbid, riverrevealamount):
+    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}")
+    riverdisplay(riverrevealamount)
+
+    if not player.folded:
+        choice = decision(player)
+        if choice[0] == 'fold':
+            player.folded = True
+        elif choice[0] == 'check':
+            pot += player.pay(highestbid)
+            player.checked = True
+        elif choice[0] == 'raise':
+            highestbid = choice[1]
+            pot += player.pay(highestbid)
+    else:
+        print(f"Player {player.name} has folded")
+
+    return pot, highestbid
+
+def checkcheck():
+    flag = True
+    for i in range(playernum):
+        if not playerlist[i].checked:
+            flag = False
+    return flag
+
+def checkreset():
+    for i in range(playernum):
+        playerlist[i].checked = False
+
+def playersstillin():
+    foldcounter = 0
+    lastinid = 0
+    for i in range(playernum):
+        if playerlist[i].folded:
+            foldcounter += 1
+        else:
+            lastinid = i
+    return playernum - foldcounter, lastinid
 
 
 # Classes
@@ -72,16 +163,23 @@ class Player:
         self.money = startingmoney
         self.name = newname
         self.hand = []
+        self.folded = False
+        self.checked = False
     def newhand(self):
         self.hand = [deck.pop(), deck.pop()]
     def resethand(self):
         self.hand = []
+        self.newhand()
     def viewhand(self):
         input(f"Player {self.name} press enter to see your cards when no one else is looking\n")
         for i in range(len(self.hand)):
             displaycard(self.hand[i])
         input("\nPress enter to wipe the screen\n")
         clearscreen()
+    def pay(self, amount):
+        print(f"You paid {amount}")
+        self.money -= amount
+        return amount
 
 
 playerlist = []
@@ -122,13 +220,67 @@ clearscreen()
 
 
 blindcounter = randint(0, playernum-1) # Player id of counter will be small blind, counter + 1 will be big blind
+blindamount = 5
+blindnumber = 2 # 2 blind players
 
 # Game loop
 run = True
 while run:
+    # Initial Setup
+    riverreset()
+    deckreset()
+    potreset()
+    initialmoneyreset()
+    blindcounter %= playernum
+    winnerid = None
+
+    # Blinds
+    for i in range(blindnumber):
+        select = (blindcounter + i) % playernum
+        pot += playerlist[select].pay(blindamount * (i + 1))
+
+    highestbid = blindamount * blindnumber
+
+    # Reset each player's hand and they can privately view
     for i in range(playernum):
         clearscreen()
         print("Card viewing")
         playerlist[i].resethand()
-        playerlist[i].newhand()
         playerlist[i].viewhand()
+
+    for i in range(4): # 0 river, 3 river, 4 river, 5 river
+        if i == 0:
+            rivercounter = 0
+        else:
+            rivercounter = i + 2
+
+        checkreset()
+        allcheckflag = False
+        counter = blindcounter + 2  # Small blind, Big blind, First player
+        while not allcheckflag and winnerid is None:
+            clearscreen()
+            counter %= playernum  # If more than playernum counter loops back to the start
+            player = playerlist[counter]
+
+            pot, highestbid = decisionloop(player, pot, highestbid, rivercounter)
+
+            allcheckflag = checkcheck()
+
+            counter += 1
+            input("Press enter to end turn")
+
+            stillinresult = playersstillin()
+            if stillinresult[0] == 1:
+                winnerid = stillinresult[1]
+
+        if winnerid is not None:
+            break
+
+    if winnerid is not None:
+        print(f"Player {playerlist[winnerid].name} won!")
+        if initialmoney[winnerid] >= pot:
+            playerlist[winnerid].money += pot
+        else: # Sidepot
+            pass
+    else:
+        pass
