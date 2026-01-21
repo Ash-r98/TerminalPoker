@@ -69,8 +69,6 @@ def deckreset():
     deck = fulldeck
     shuffle(deck)
 
-def riverreset():
-    river = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()]
 
 def riverdisplay(riverrevealamount):
     print("River:")
@@ -79,21 +77,13 @@ def riverdisplay(riverrevealamount):
             displaycard(river[i])
     print()
 
-def potreset():
-    pot = 0
-
-def initialmoneyreset():
-    initialmoney = []
-    for i in range(playernum):
-        initialmoney.append(playerlist[i].money)
-
 def decision(player):
     raiseamount = 0
     while True:
-        cmd = input("Options: (Fold, Check, Raise, Cards)\n").lower()
+        cmd = input("Options: (Fold, Call, Raise, Cards)\n").lower()
         if cmd == 'fold':
             return cmd, raiseamount
-        elif cmd == 'check':
+        elif cmd == 'call' or cmd == 'check':
             return cmd, raiseamount
         elif cmd == 'raise':
             if not player.checked:
@@ -104,11 +94,14 @@ def decision(player):
                 else:
                     try:
                         raiseamount = int(amount)
-                        return cmd, raiseamount
+                        if raiseamount > player.money:
+                            print("You don't have that much money")
+                        else:
+                            return cmd, raiseamount
                     except:
                         print("Invalid amount")
             else:
-                print("You have already checked this round, you cannot raise")
+                print("You have already called this round, you cannot raise")
         elif cmd == 'cards':
             player.viewhand()
         else:
@@ -122,12 +115,14 @@ def decisionloop(player, pot, highestbid, riverrevealamount):
         choice = decision(player)
         if choice[0] == 'fold':
             player.folded = True
-        elif choice[0] == 'check':
-            pot += player.pay(highestbid)
+        elif choice[0] == 'call' or choice[0] == 'check':
+            pot += player.pay(highestbid - player.bid)
+            player.bid = highestbid
             player.checked = True
         elif choice[0] == 'raise':
-            highestbid = choice[1]
+            highestbid = choice[1] + player.bid
             pot += player.pay(highestbid)
+            player.bid = highestbid
     else:
         print(f"Player {player.name} has folded")
 
@@ -136,7 +131,7 @@ def decisionloop(player, pot, highestbid, riverrevealamount):
 def checkcheck():
     flag = True
     for i in range(playernum):
-        if not playerlist[i].checked:
+        if not playerlist[i].checked and not playerlist[i].folded:
             flag = False
     return flag
 
@@ -165,6 +160,7 @@ class Player:
         self.hand = []
         self.folded = False
         self.checked = False
+        self.bid = 0
     def newhand(self):
         self.hand = [deck.pop(), deck.pop()]
     def resethand(self):
@@ -227,10 +223,12 @@ blindnumber = 2 # 2 blind players
 run = True
 while run:
     # Initial Setup
-    riverreset()
     deckreset()
-    potreset()
-    initialmoneyreset()
+    river = [deck.pop(), deck.pop(), deck.pop(), deck.pop(), deck.pop()]
+    pot = 0
+    initialmoney = []
+    for i in range(playernum):
+        initialmoney.append(playerlist[i].money)
     blindcounter %= playernum
     winnerid = None
 
@@ -238,6 +236,9 @@ while run:
     for i in range(blindnumber):
         select = (blindcounter + i) % playernum
         pot += playerlist[select].pay(blindamount * (i + 1))
+        playerlist[select].bid = blindamount * (i + 1)
+        print(f"Player {playerlist[select].name} is blind (${blindamount * (i + 1)})")
+        input("Press enter to continue\n")
 
     highestbid = blindamount * blindnumber
 
@@ -267,7 +268,7 @@ while run:
             allcheckflag = checkcheck()
 
             counter += 1
-            input("Press enter to end turn")
+            input("Press enter to end turn\n")
 
             stillinresult = playersstillin()
             if stillinresult[0] == 1:
@@ -277,10 +278,11 @@ while run:
             break
 
     if winnerid is not None:
-        print(f"Player {playerlist[winnerid].name} won!")
+        print(f"Player {playerlist[winnerid].name} won the round and gained ${pot}!")
         if initialmoney[winnerid] >= pot:
             playerlist[winnerid].money += pot
         else: # Sidepot
             pass
     else:
         pass
+    clearscreen()
