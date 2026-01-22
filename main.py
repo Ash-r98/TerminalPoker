@@ -108,10 +108,10 @@ def decision(player):
             print("Invalid option")
 
 def decisionloop(player, pot, highestbid, riverrevealamount):
-    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}\nCurrent Bid: {player.bid}")
+    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}\nCurrent Bid: {player.bid}\nTotal Money Remaining:{player.money}")
     riverdisplay(riverrevealamount)
 
-    if player.money == 0 and player.living:
+    if player.money <= 0 and player.living:
         print(f"Player {player.name} is already all in")
     elif player.money == 0:
         print(f"Player {player.name} is out of the game")
@@ -376,6 +376,7 @@ while run:
     livingcounter = 0
     lastaliveid = 0
     for i in range(playernum):
+        playerlist[i].folded = False # Unfold every player
         if playerlist[i].money == 0:
             print(f"Player {playerlist[i].name} is out of the game")
             playerlist[i].living = False
