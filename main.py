@@ -81,23 +81,23 @@ def decision(player):
     raiseamount = 0
     while True:
         cmd = input("Options: (Fold, Call, Raise, Cards)\n").lower()
-        if cmd == 'fold':
-            return cmd, raiseamount
-        elif cmd == 'call' or cmd == 'check':
-            return cmd, raiseamount
-        elif cmd == 'raise':
+        if cmd == 'fold' or cmd == 'f':
+            return 'fold', raiseamount
+        elif cmd == 'call' or cmd == 'check' or cmd == 'c':
+            return 'call', raiseamount
+        elif cmd == 'raise' or cmd == 'r':
             if not player.checked:
                 amount = input("By how much?\n")
                 if amount == 'all':
                     raiseamount = player.money
-                    return cmd, raiseamount
+                    return 'raise', raiseamount
                 else:
                     try:
                         raiseamount = int(amount)
                         if raiseamount > player.money:
                             print("You don't have that much money")
                         else:
-                            return cmd, raiseamount
+                            return 'raise', raiseamount
                     except:
                         print("Invalid amount")
             else:
@@ -108,7 +108,7 @@ def decision(player):
             print("Invalid option")
 
 def decisionloop(player, pot, highestbid, riverrevealamount):
-    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}\nCurrent Bid: {player.bid}\nTotal Money Remaining:{player.money}")
+    print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}\nCurrent Bid: {player.bid}\nTotal Money Remaining: {player.money}")
     riverdisplay(riverrevealamount)
 
     if player.money <= 0 and player.living:
@@ -119,7 +119,7 @@ def decisionloop(player, pot, highestbid, riverrevealamount):
         choice = decision(player)
         if choice[0] == 'fold':
             player.folded = True
-        elif choice[0] == 'call' or choice[0] == 'check':
+        elif choice[0] == 'call':
             pot += player.pay(highestbid - player.bid)
             player.bid = highestbid
             player.checked = True
@@ -198,7 +198,15 @@ def handlistcompare(handlist): # Finds the highest of a list of hands and sorts 
                 betterlist.append(handlist[i])
             else: # Worse or tie
                 worselist.append(handlist[i])
-        return handlistcompare(worselist) + pivothand + handlistcompare(betterlist)
+        returnlist = []
+        worselistcompare = handlistcompare(worselist)
+        if len(worselistcompare) > 0:
+            returnlist.append(worselistcompare)
+        returnlist.append(pivothand)
+        betterlistcompare = handlistcompare(betterlist)
+        if len(betterlistcompare) > 0:
+            returnlist.append(handlistcompare(betterlist))
+        return returnlist
 
 
 # Classes
@@ -345,7 +353,9 @@ while run:
                 playersremaining.append(playerlist[i])
                 playersremaininghands.append(playerlist[i].hand + river)
 
+        print(playersremaininghands)
         rankedhands = handlistcompare(playersremaininghands)
+        print(rankedhands)
         for player in playersremaining:
             temphand = handdetector.sorthand(player.hand + river)
             tophand = handdetector.sorthand(rankedhands[-1])
