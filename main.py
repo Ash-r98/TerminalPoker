@@ -6,7 +6,7 @@ cardvalues = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'ki
 suits = ['spade', 'heart', 'club', 'diamond']
 suiticons = ['♤', '♡', '♧', '♢']
 handtypes = ['high card', 'pair', 'two pair' ,'three of a kind', 'straight', 'flush', 'full house', 'four of a kind', 'straight flush', 'royal flush']
-cardexample = ['a', 'spade']
+cardexample = ['ace', 'spade']
 
 fulldeck = []
 for i in range(len(cardvalues)): # Each card value
@@ -125,7 +125,7 @@ def decisionloop(player, pot, highestbid, riverrevealamount):
             player.checked = True
         elif choice[0] == 'raise':
             highestbid = choice[1] + player.bid
-            pot += player.pay(highestbid)
+            pot += player.pay(choice[1])
             player.bid = highestbid
     else:
         print(f"Player {player.name} has folded")
