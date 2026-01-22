@@ -1,5 +1,4 @@
-from random import randint, shuffle#
-from time import sleep
+from random import randint, shuffle
 import handdetector
 import os
 
@@ -238,13 +237,13 @@ devmode = False
 while True:
     newplayername = input("Input player name: (Input '0' once all players are in or '-1' to reset all names)\n")
     if newplayername == '0':
-        if len(playernamelist) >= 3:
+        if len(playernamelist) >= 2:
             displaynames()
             allplayernamesconfirm = intinputvalidate("Is this all players? (1=Yes, 0=No, add more)\n", 0, 1)
             if allplayernamesconfirm:
                 break
         else:
-            print("You must have at least 3 players to play")
+            print("You must have at least 2 players to play")
     elif newplayername == '-1':
         playernamelist = []
         print("All names reset, please input all player names again")
@@ -352,13 +351,27 @@ while run:
             tophand = handdetector.sorthand(rankedhands[-1])
             if temphand == tophand:
                 winner = player
+                winnerid = playerlist.index(winner)
                 break
 
         print(f"Player {playerlist[winnerid].name} won the round and gained ${pot}!")
         if initialmoney[winnerid] >= pot:
             playerlist[winnerid].money += pot
         else:  # Sidepot
-            pass
+            playersremaininghandlistexcludingwinner = []
+            for i in range(len(playersremaininghands)):
+                if playersremaininghands[i] != tophand:
+                    playersremaininghandlistexcludingwinner.append(playersremaininghands[i])
+            otherrankedhands = handlistcompare(playersremaininghandlistexcludingwinner)
+            for player in playersremaining:
+                temphand = handdetector.sorthand(player.hand + river)
+                tophand = handdetector.sorthand(otherrankedhands[-1])
+                if temphand == tophand:
+                    winner = player
+                    winnerid = playerlist.index(winner)
+                    break
+            print(f"Player {playerlist[winnerid].name} won the round and gained ${pot}!")
+            playerlist[winnerid].money += pot
 
     livingcounter = 0
     lastaliveid = 0
