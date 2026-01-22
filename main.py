@@ -19,6 +19,7 @@ shuffle(deck)
 river = []
 pot = 0
 initialmoney = []
+lastaliveid = 0
 
 # Colours
 reset = "\033[0m"
@@ -111,7 +112,11 @@ def decisionloop(player, pot, highestbid, riverrevealamount):
     print(f"Player {player.name}\nPot: {pot}\nHighest Bid: {highestbid}\nCurrent Bid: {player.bid}")
     riverdisplay(riverrevealamount)
 
-    if not player.folded:
+    if player.money == 0 and player.living:
+        print(f"Player {player.name} is already all in")
+    elif player.money == 0:
+        print(f"Player {player.name} is out of the game")
+    elif not player.folded and player.living:
         choice = decision(player)
         if choice[0] == 'fold':
             player.folded = True
@@ -147,7 +152,8 @@ def playersstillin():
             foldcounter += 1
         else:
             lastinid = i
-    return playernum - foldcounter, lastinid
+    stillinnumber = playernum - foldcounter
+    return stillinnumber, lastinid
 
 def highcardcompare(hand1, hand2):
     # Return: 0 = tie, 1 = hand1 better, 2 = hand2 better
@@ -207,6 +213,7 @@ class Player:
         self.folded = False
         self.checked = False
         self.bid = 0
+        self.living = True
     def newhand(self):
         self.hand = [deck.pop(), deck.pop()]
     def resethand(self):
@@ -325,7 +332,7 @@ while run:
 
 
     # Post round loop winner detection
-    if winnerid is not None:
+    if winnerid is not None: # Everyone folds except one person
         print(f"Player {playerlist[winnerid].name} won the round and gained ${pot}!")
         if initialmoney[winnerid] >= pot:
             playerlist[winnerid].money += pot
@@ -353,5 +360,20 @@ while run:
         else:  # Sidepot
             pass
 
-    input("Press enter to begin the next round\n")
-    clearscreen()
+    livingcounter = 0
+    lastaliveid = 0
+    for i in range(playernum):
+        if playerlist[i].money == 0:
+            print(f"Player {playerlist[i].name} is out of the game")
+            playerlist[i].living = False
+        elif playerlist[i].living:
+            livingcounter += 1
+            lastaliveid = i
+
+    if livingcounter <= 1:
+        run = False
+    else:
+        input("Press enter to begin the next round\n")
+        clearscreen()
+
+print(f"Player {playerlist[lastaliveid].name} has won with ${playerlist[lastaliveid].money}")
