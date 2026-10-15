@@ -84,7 +84,7 @@ def riverdisplay(riverrevealamount):
 def decision(player):
     raiseamount = 0
     while True:
-        cmd = input("Options: (Fold, Call, Raise, Cards)\n").lower()
+        cmd = input("Options: (Fold, Call, Raise, Cards, Players)\n").lower()
         if cmd == 'fold' or cmd == 'f':
             return 'fold', raiseamount
         elif cmd == 'call' or cmd == 'check' or cmd == 'c':
@@ -108,6 +108,8 @@ def decision(player):
                 print("You have already called this round, you cannot raise")
         elif cmd == 'cards':
             player.viewhand()
+        elif cmd == 'players' or cmd == 'p':
+            displaynames()
         else:
             print("Invalid option")
 
@@ -117,7 +119,7 @@ def decisionloop(player, pot, highestbid, riverrevealamount):
 
     if player.money <= 0 and player.living:
         print(f"Player {player.name} is already all in")
-    elif player.money == 0:
+    elif player.money <= 0:
         print(f"Player {player.name} is out of the game")
     elif not player.folded and player.living:
         choice = decision(player)
