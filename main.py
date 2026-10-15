@@ -26,6 +26,10 @@ dim = "\033[2m" # Spades
 red = "\033[31m" # Hearts
 green = "\033[38;5;70m" # Clubs
 orange = "\033[38;5;214m" # Diamonds
+spadecolour = dim
+heartcolour = red
+clubcolour = green
+diamondcolour = orange
 
 # Subroutins
 # Hand detection imported from handdetector.py
@@ -55,15 +59,15 @@ def displaynames():
 
 def displaycard(card):
     if card[1] == 'spade':
-        print(f"{dim}{card[0]} {suiticons[0]}{reset}")
+        print(f"{spadecolour}{card[0]} {suiticons[0]}{reset}")
     elif card[1] == 'heart':
-        print(f"{red}{card[0]} {suiticons[1]}{reset}")
+        print(f"{heartcolour}{card[0]} {suiticons[1]}{reset}")
     elif card[1] == 'club':
-        print(f"{green}{card[0]} {suiticons[2]}{reset}")
+        print(f"{clubcolour}{card[0]} {suiticons[2]}{reset}")
     elif card[1] == 'diamond':
-        print(f"{orange}{card[0]} {suiticons[3]}{reset}")
+        print(f"{diamondcolour}{card[0]} {suiticons[3]}{reset}")
     else:
-        print("Suit not found")
+        print(f"Suit not found ({card[0]})")
 
 def deckreset():
     deck = fulldeck
